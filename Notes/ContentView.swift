@@ -9,12 +9,21 @@ import CoreImage.CIFilterBuiltins
 import Photos
 import PDFKit
 
+/*Vengono importate le librerie necessarie (SwiftUI, CoreImage, CoreImage.CIFilterBuiltins, Photos, PDFKit).
+ Viene dichiarata una classe SharedViewModel che conforma al protocollo ObservableObject. Questa classe contiene due proprietà @Published: scannedImage di tipo UIImage (immagine acquisita dalla fotocamera) e savedDocuments di tipo [URL] (una lista di URL dei documenti salvati).*/
+
 class SharedViewModel: ObservableObject {
     @Published var scannedImage: UIImage?
     @Published var savedDocuments: [URL] = []
 }
 
 struct ContentView: View {
+    /*
+     Viene creata un'istanza di SharedViewModel e gestite varie variabili di stato (@State) per la visualizzazione di elementi come l'image picker, la modale dei documenti, la modalità di editing dell'immagine, ecc.
+     Viene definita una variabile gradient per uno sfondo a gradiente.
+     La vista principale contiene un'interfaccia utente che può mostrare un'immagine acquisita, un pulsante per salvare l'immagine come PDF, un pulsante per acquisire una nuova foto e un pulsante per visualizzare i documenti salvati.
+     */
+
     @StateObject private var viewModel = SharedViewModel()
     @State private var isImagePickerPresented: Bool = false
     @State private var showAlert: Bool = false
@@ -126,6 +135,7 @@ struct ContentView: View {
         }
     }
     
+    //Calcola la posizione originale dell'immagine nella vista.
     private func getImageOrigin() -> CGPoint {
         guard let scannedImage = viewModel.scannedImage else { return .zero }
         
@@ -138,6 +148,7 @@ struct ContentView: View {
         return CGPoint(x: x, y: y)
     }
     
+    //Applica il ritaglio all'immagine acquisita in base al rettangolo di selezione.
     private func applyCropping() {
         guard let scannedImage = viewModel.scannedImage else { return }
         
@@ -158,6 +169,7 @@ struct ContentView: View {
         viewModel.scannedImage = croppedImage
     }
     
+    //Applica un filtro di desaturazione all'immagine acquisita.
     private func applyFilter() {
         guard let uiImage = viewModel.scannedImage else { return }
         
@@ -178,6 +190,7 @@ struct ContentView: View {
         }
     }
     
+    //Crea un'overlay per il ritaglio che può essere attivato o disattivato.
     private func croppingOverlay(isActive: Bool) -> some View {
         Group {
             if isActive {
@@ -211,7 +224,7 @@ struct ContentView: View {
     }
     
     
-
+//Gestisce il gesto di rotazione dell'immagine.
 private func rotationGesture() -> some Gesture {
     RotationGesture()
         .onChanged { angle in
@@ -219,7 +232,7 @@ private func rotationGesture() -> some Gesture {
         }
 }
     
-    
+    //Salva l'immagine acquisita come documento PDF e aggiunge il suo URL a savedDocuments.
     private func saveImageAsPDF() {
     guard let scannedImage = viewModel.scannedImage else { return }
     
@@ -242,6 +255,10 @@ private func rotationGesture() -> some Gesture {
     }
     
 }
+
+
+/*Una vista modal per visualizzare e gestire i documenti salvati.
+ Permette la visualizzazione dei documenti, il loro rinominamento, l'eliminazione e la navigazione verso un visualizzatore PDF quando viene selezionato un documento.*/
 
 struct DocumentsModalView: View {
     @Binding var savedDocuments: [URL]
@@ -351,6 +368,7 @@ struct DocumentsModalView: View {
     }
 }
 
+//Utilizza PDFKit per visualizzare un documento PDF.
 struct PDFViewer: View {
     let url: URL
     
@@ -416,6 +434,7 @@ struct ViewDocumentsButtonStyle: ButtonStyle {
     }
 }
 
+//Aggiunge una funzione cropped(to:) per ritagliare un'immagine in base a un rettangolo specificato.
 extension UIImage {
     func cropped(to rect: CGRect) -> UIImage? {
         guard let cgImage = cgImage?.cropping(to: rect) else { return nil }
